@@ -86,11 +86,13 @@ def track_connection(file_name):
         print(f"\"{server_port}\" is not a valid port number.")
         sys.exit(1) 
     
-    server_sequence_offset = None
-    client_sequence_offset = None
+    serv_seq_offset = None
+    clnt_seq_offset = None
     count = 0
     conn_pkt_count = 0
     print("")
+    print(f"TCP session between {client_ip} and {server_ip}:")
+    print("-----------------------------------------------------------")
     for pkt in pkt_list:
         count += 1
         ip_hdr = pkt[IP]
@@ -135,24 +137,24 @@ def track_connection(file_name):
         # Calculate packet metadata
         tcp_payload_len = ip_hdr.len - (ip_hdr.ihl * 4) - (tcp_hdr.dataofs * 4)
         if direction == PktDirection.client_to_server:
-                if client_sequence_offset is None:
-                    client_sequence_offset = tcp_hdr.seq
-                relative_offset_seq = tcp_hdr.seq - client_sequence_offset
+                if clnt_seq_offset is None:
+                    clnt_seq_offset = tcp_hdr.seq
+                relative_offset_seq = tcp_hdr.seq - clnt_seq_offset
         else:
             assert direction == PktDirection.server_to_client
-            if server_sequence_offset == None:
-                server_sequence_offset = tcp_hdr.seq
-            relative_offset_seq = tcp_hdr.seq - server_sequence_offset
+            if serv_seq_offset == None:
+                serv_seq_offset = tcp_hdr.seq
+            relative_offset_seq = tcp_hdr.seq - serv_seq_offset
 
         # If  TCP header has "A" as an attribute, it must carry an ack number.
         if "A" not in str(tcp_hdr.flags):
             relative_offset_ack = 0
         else:
             if direction == PktDirection.client_to_server:
-                server_sequence_offset = tcp_hdr.seq
-                relative_offset_ack = tcp_hdr.ack - server_sequence_offset
+                serv_seq_offset = tcp_hdr.seq
+                relative_offset_ack = tcp_hdr.ack - serv_seq_offset
             else:
-                relative_offset_ack = tcp_hdr.ack - client_sequence_offset
+                relative_offset_ack = tcp_hdr.ack - clnt_seq_offset
         
         # Print resuls.
         fmt = "{num:>6s}  {time:<20s} {client_ip:<15s}  {arrow}  {server_ip:>15s}  flag={flag:<3s}  seq={seq:<9d}  \
