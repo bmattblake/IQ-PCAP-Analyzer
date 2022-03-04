@@ -1,5 +1,7 @@
 # Pcap-File-Analyzer
 
+Note that this program is in its very early stages.
+
 **Description:**
 
 This is a basic command-line tool that has the ability to analyze pcap files.
