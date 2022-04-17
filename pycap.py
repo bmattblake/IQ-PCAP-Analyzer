@@ -197,7 +197,7 @@ if __name__ == "__main__":
     if not os.path.isfile(file_name):
         print(f"\"{file_name}\" does not exist")
         sys.exit(-1)
-    file_ext = file_name.split(".")[1]
+    file_ext = file_name.split(".")[-1]
     if file_ext != "pcap":
         print(f"\"{file_name}\" is an unsupported file type.")
         sys.exit(-1)
