@@ -126,11 +126,11 @@ def track_connection(file_name):
         if conn_pkt_count == 1:
             first_pkt = pkt
             first_pkt_time = datetime.fromtimestamp(int(first_pkt.time))
-            first_pkt_num = count
+            first_pkt_num = int(count)
         
         last_pkt = pkt
         last_pkt_time = datetime.fromtimestamp(int(last_pkt.time))
-        last_pkt_num = count
+        last_pkt_num = int(count)
         conn_pkt_count += 1
         
         # Calculate packet metadata
@@ -175,7 +175,7 @@ def track_connection(file_name):
     # Print summary.
     if conn_pkt_count != 0:
         perc = round(conn_pkt_count / pkt_count, 4)
-        print(f"\n{conn_pkt_count}/{pkt_count} ({perc}%) packets sent between client and server:")
+        print(f"\n{conn_pkt_count}/{pkt_count} ({perc}%) packets in this session between {client_ip} and {server_ip}:")
         print(f"First packet in connection: Packet #{first_pkt_num} {first_pkt_time}" )
         print(f"Final packet in connection: Packet #{last_pkt_num} {last_pkt_time}" )
     else:
@@ -184,11 +184,11 @@ def track_connection(file_name):
     
 if __name__ == "__main__":
     parser = ArgumentParser(description = "PCAP reader")
-    parser.add_argument("pcap", metavar = "pycap.py[PCAP FILE NAME]",
+    parser.add_argument("pcap", metavar = "pycap.py [PCAP FILE NAME]",
                         help = "Specify the pcap file to analyze")
     parser.add_argument("-c", "--connection", nargs = 2,
-                        metavar = "[CLIENT IP ADDRESS]:[PORT] [SERVER IP ADDRESS]:[PORT]",
-                        help = "Track a connection between a client and server")
+                        metavar = "[IP ADDRESS]:[PORT]",
+                        help = "Track a connection between two devices.")
     parser.add_argument("-t", help = "Only include TCP packets", action = "store_true")
     parser.add_argument("-u", help = "Only include UDP packets", action = "store_true")
     args = parser.parse_args()
