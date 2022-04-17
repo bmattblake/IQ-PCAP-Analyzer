@@ -90,9 +90,8 @@ def track_connection(file_name):
     clnt_seq_offset = None
     count = 0
     conn_pkt_count = 0
-    print("")
     print(f"TCP session between {client_ip} and {server_ip}:")
-    print("-----------------------------------------------------------")
+    print("------------------------------------------------------------------------------------------------------------------------------")
     for pkt in pkt_list:
         count += 1
         ip_hdr = pkt[IP]
@@ -172,12 +171,16 @@ def track_connection(file_name):
                          seq = relative_offset_seq,
                          ack = relative_offset_ack,
                          len = tcp_payload_len))
-    
+        
     # Print summary.
-    perc = round(conn_pkt_count / pkt_count, 4)
-    print(f"\n{conn_pkt_count}/{pkt_count} ({perc}%) packets sent between client and server:")
-    print(f"First packet in connection: Packet #{first_pkt_num} {first_pkt_time}" )
-    print(f"Final packet in connection: Packet #{last_pkt_num} {last_pkt_time}" )
+    if conn_pkt_count != 0:
+        perc = round(conn_pkt_count / pkt_count, 4)
+        print(f"\n{conn_pkt_count}/{pkt_count} ({perc}%) packets sent between client and server:")
+        print(f"First packet in connection: Packet #{first_pkt_num} {first_pkt_time}" )
+        print(f"Final packet in connection: Packet #{last_pkt_num} {last_pkt_time}" )
+    else:
+        print(f"TCP Connection between {args.connection[0]} and {args.connection[1]} not found.")
+        print("Ensure that the IP addresses and port numbers provided are correct.")
     
 if __name__ == "__main__":
     parser = ArgumentParser(description = "PCAP reader")
@@ -193,6 +196,10 @@ if __name__ == "__main__":
     file_name = args.pcap
     if not os.path.isfile(file_name):
         print(f"\"{file_name}\" does not exist")
+        sys.exit(-1)
+    file_ext = file_name.split(".")[1]
+    if file_ext != "pcap":
+        print(f"\"{file_name}\" is an unsupported file type.")
         sys.exit(-1)
 
     parse_pcap(file_name)
