@@ -1,4 +1,4 @@
-# Pcap-File-Analyzer
+# IQ PCAP
 
 Note that this program is in its very early stages.
 
@@ -16,7 +16,7 @@ It can track a specified connection within a pcap file based on the client and s
 
 **Sample Output:**
 ```
-$ python pycap.py sample.pcap -c 192.168.0.4:3905 192.168.0.1:443
+$ python iqpcap.py sample.pcap -c 192.168.0.4:3905 192.168.0.1:443
 Parsing sample.pcap...
 TCP session between 192.168.0.4 and 192.168.0.1:
 ------------------------------------------------------------------------------------------------------------------------------
