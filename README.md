@@ -12,11 +12,11 @@ It can track a specified connection within a pcap file based on the client and s
 
 **Syntax:**
 
-```python pycap.py [FILE_NAME].pcap -c [CLIENT_IP]:[PORT] [SERVER_IP]:[PORT]```
+```python3 iqpcap.py [FILE_NAME].pcap -c [CLIENT_IP]:[PORT] [SERVER_IP]:[PORT]```
 
 **Sample Output:**
 ```
-$ python iqpcap.py sample.pcap -c 192.168.0.4:3905 192.168.0.1:443
+$ python3 iqpcap.py sample.pcap -c 192.168.0.4:3905 192.168.0.1:443
 Parsing sample.pcap...
 TCP session between 192.168.0.4 and 192.168.0.1:
 ------------------------------------------------------------------------------------------------------------------------------
