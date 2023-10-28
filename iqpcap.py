@@ -1,5 +1,6 @@
 import os
 import sys
+from packet_direction import PktDirection
 from protocols import Protocol
 from argparse import ArgumentParser
 from datetime import datetime
@@ -8,10 +9,7 @@ from scapy.layers.inet import IP, TCP
 
 '''YOU MAY NEED TO INSTALL THE DEVLOPER VERSION OF SCAPY FOR THIS PRGRAM TO WORK'''
 
-class PktDirection:
-    undefined = 0
-    client_to_server = 1
-    server_to_client = 2
+
 
 def validate_ip(ip_address):
     octets = ip_address.split(".")
@@ -59,6 +57,8 @@ def parse_pcap(file_name):
             # Ignore non-IPv4 packets
             if pkt.type == Protocol.ARP:
                 print("ARP")
+            if pkt.type == Protocol.IPv6:
+                print("IPv6")
             continue
         
         ip_hdr = pkt[IP]
