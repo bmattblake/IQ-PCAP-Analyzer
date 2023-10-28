@@ -5,11 +5,19 @@ from protocols import Protocol
 from argparse import ArgumentParser
 from datetime import datetime
 from scapy.all import *
-from scapy.layers.inet import IP, TCP
+from scapy.layers.l2 import ARP
+from scapy.layers.inet import IP, TCP, UDP
 
 '''YOU MAY NEED TO INSTALL THE DEVLOPER VERSION OF SCAPY FOR THIS PRGRAM TO WORK'''
 
-
+def loadbar(iteration, total, prefix="", suffix="", decimals=2, legnth=100, fill=">"):
+    percent = round(iteration/float(total), decimals)
+    filled_length = int(legnth * iteration // total)
+    bar = fill * filled_length + "-" * (legnth - filled_length)
+    print(f"\r{prefix} |{bar}| {percent}% {suffix}", end="\r")
+    if iteration == total:
+        print()
+    
 
 def validate_ip(ip_address):
     octets = ip_address.split(".")
@@ -38,17 +46,24 @@ def validate_port(port):
 
 def parse_pcap(file_name):
     print(f"Parsing {file_name}...")
+    
+    
     global pkt_list 
     pkt_list = rdpcap(file_name)
     global pkt_count
     pkt_count = len(pkt_list)
+    
+    
 
     if args.connection != None:
         track_connection(file_name)
         return
     
+    
     intr_pkt_count = 0
+    count = 0
     for pkt in pkt_list:
+        
         if "type" not in pkt.fields:
             # LLC frames will have "len" instead of "type". These are not important.
             continue
@@ -56,7 +71,7 @@ def parse_pcap(file_name):
         if pkt.type != Protocol.IPv4:
             # Ignore non-IPv4 packets
             if pkt.type == Protocol.ARP:
-                print("ARP")
+                pass
             if pkt.type == Protocol.IPv6:
                 print("IPv6")
             continue
@@ -71,6 +86,10 @@ def parse_pcap(file_name):
             continue 
     
         intr_pkt_count += 1
+        
+        count += 1
+        #loadbar(count, pkt_count, prefix="Progress:", suffix="Complete",)
+        
         
     print(f"{file_name} contains {pkt_count} packets ({intr_pkt_count} intersting)")
     
