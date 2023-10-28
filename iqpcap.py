@@ -1,5 +1,6 @@
 import os
 import sys
+from protocols import Protocol
 from argparse import ArgumentParser
 from datetime import datetime
 from scapy.all import *
@@ -54,14 +55,20 @@ def parse_pcap(file_name):
             # LLC frames will have "len" instead of "type". These are not important.
             continue
         
-        if pkt.type != 0x0800:
+        if pkt.type != Protocol.IPv4:
             # Ignore non-IPv4 packets
+            if pkt.type == Protocol.ARP:
+                print("ARP")
             continue
         
         ip_hdr = pkt[IP]
         if ip_hdr.proto != 6 and args.t:
-            # Ignore non-TCP packets
+            # Ignore non-TCP packets if "-t" flag is used
             continue
+        
+        if ip_hdr.proto != 17 and args.u:
+           # Ignore non-UDP packets if "-u" flag is used
+            continue 
     
         intr_pkt_count += 1
         
@@ -198,8 +205,8 @@ if __name__ == "__main__":
         print(f"\"{file_name}\" does not exist")
         sys.exit(-1)
     file_ext = file_name.split(".")[-1]
-    if file_ext != "pcap":
-        print(f"\"{file_name}\" is an unsupported file type.")
+    if file_ext not in ["pcap", "cap"]:
+        print(f"\"{file_name}\" is an unsupported file type. Only .cap and .pcap files are supported")
         sys.exit(-1)
 
     parse_pcap(file_name)
