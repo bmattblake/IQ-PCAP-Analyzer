@@ -155,10 +155,11 @@ class PcapHandler:
             print(f"{ARP_count} ARP ethernet frames")
         
         # print breakdown (Layer 4)
-        for proto in pkt_dict["IPv4"].items():
+        '''for proto in pkt_dict["IPv4"].items():
             proto = proto[0]
             if len(pkt_dict["IPv4"][proto]) > 0:
-                print(f"{len(pkt_dict['IPv4'][proto])} {proto} packets")
+                print(type(pkt_dict["IPv4"][proto]))
+                print(f"{len(pkt_dict['IPv4'][proto])} {proto} packets")'''
          
         # print breakdown (Layer 7)
         for proto in pkt_dict["IPv4"]["TCP"].items():
