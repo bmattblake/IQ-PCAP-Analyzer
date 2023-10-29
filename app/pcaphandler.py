@@ -1,10 +1,14 @@
 import sys
+import time
 from protocols import Protocol
 from pktdirection import PktDirection
 from datetime import datetime
 from scapy.all import rdpcap
 from scapy.layers.l2 import ARP
-from scapy.layers.inet import IP, TCP, UDP
+from scapy.layers.inet import IP, TCP, UDP, ICMP
+from scapy.layers.http import HTTP
+from scapy.packet import Raw
+
 
 
 class PcapHandler:
@@ -60,7 +64,12 @@ class PcapHandler:
         return True
 
     def parse_pcap(self, file_name):
-        pkt_dict = dict()
+        pkt_dict = {
+            "ARP": [],
+            "IPv4": {"TCP": dict(),
+                     "UDP": dict(),
+                     "ICMP": []}
+        }
         print(f"Parsing {file_name}...")
         
         self.pkt_list = rdpcap(file_name)
@@ -73,7 +82,7 @@ class PcapHandler:
         
         intr_pkt_count = 0
         count = 0
-        arp_pkts = False
+        frag_pkts = 0
         for pkt in self.pkt_list:
             
             if "type" not in pkt.fields:
@@ -82,42 +91,81 @@ class PcapHandler:
             
             if pkt.type != Protocol.IPv4:
                 # Ignore non-IPv4 packets
-                if pkt.type == Protocol.ARP and self.args.a:
-                    if not arp_pkts:
-                        pkt_dict["ARP"] = []
-                        arp_pkts = True
-                            
+                if pkt.type == Protocol.ARP and self.args.a:          
                     pkt_dict["ARP"].append(pkt)
                     intr_pkt_count += 1
-                if pkt.type == Protocol.IPv6:
+                elif pkt.type == Protocol.IPv6:
                     pass
                 continue
             
             ip_hdr = pkt[IP]
-            if ip_hdr.proto != 6 and self.args.t:
+            if ip_hdr.proto != Protocol.TCP and self.args.t:
                 # Ignore non-TCP packets if "-t" flag is used
                 continue
             
-            if ip_hdr.proto != 17 and self.args.u:
+            if ip_hdr.proto != Protocol.ICMP and self.args.u:
                 # Ignore non-UDP packets if "-u" flag is used
                 continue 
         
-            if ip_hdr.proto == 6:
+            
+            tcp_protos_observed = set()
+            if ip_hdr.proto == Protocol.TCP:
                 tcp_hdr = ip_hdr[TCP]
+                sprotcol = Protocol().get_protocol(tcp_hdr.sport)
+                dprotcol = Protocol().get_protocol(tcp_hdr.dport)
                 
-        
+                if tcp_hdr.haslayer(HTTP):
+                
+                    if type(tcp_hdr[HTTP].payload) == Raw:
+                        # if payload is raw, then this packe tis a segment. 
+                        # It will be reonstructed later, so no need to count the segments.
+                        continue
+                    if sprotcol != None:
+                        if sprotcol not in pkt_dict["IPv4"]["TCP"].keys():
+                            pkt_dict["IPv4"]["TCP"][sprotcol] = []
+                        pkt_dict["IPv4"]["TCP"][sprotcol].append(tcp_hdr)
+                    elif dprotcol != None:
+                        if dprotcol not in pkt_dict["IPv4"]["TCP"].keys():
+                            pkt_dict["IPv4"]["TCP"][dprotcol] = []
+                        pkt_dict["IPv4"]["TCP"][dprotcol].append(tcp_hdr)
+                    
+                        
+            if ip_hdr.proto == Protocol.ICMP:
+                try:
+                    icmp_hdr = ip_hdr[ICMP]
+                    pkt_dict["IPv4"]["ICMP"].append(icmp_hdr)
+                except IndexError: # IndexError is raised when packet is fragmented
+                    frag_pkts += 1
+            
+                
             intr_pkt_count += 1
             count += 1
             #loadbar(count, pkt_count, prefix="Progress:", suffix="Complete",)
+        
+        # Print results
+        if frag_pkts > 0:
+            print(f"{file_name} contains {self.pkt_count} packets ({frag_pkts} fragmented)")
+        else:        
+            print(f"{file_name} contains {self.pkt_count} packets ({intr_pkt_count} intersting)")
+        
+        
+        # print breakdown (Layer 2)
+        ARP_count = len(pkt_dict['ARP'])
+        if ARP_count > 0:
+            print(f"{ARP_count} ARP ethernet frames")
+        
+        # print breakdown (Layer 4)
+        for proto in pkt_dict["IPv4"].items():
+            proto = proto[0]
+            if len(pkt_dict["IPv4"][proto]) > 0:
+                print(f"{len(pkt_dict['IPv4'][proto])} {proto} packets")
+         
+        # print breakdown (Layer 7)
+        for proto in pkt_dict["IPv4"]["TCP"].items():
+            proto = proto[0]
+            if len(pkt_dict["IPv4"]["TCP"][proto]) > 0:
+                print(f"{len(pkt_dict['IPv4']['TCP'][proto])} {proto} packets")
             
-        # Print results    
-        print(f"{file_name} contains {self.pkt_count} packets ({intr_pkt_count} intersting)")
-        
-        try:
-            print(f"{len(pkt_dict['ARP'])} ARP ethernet frames")
-        except KeyError: # if packet type does not exist in dict, then no need to print results for packet type
-            pass
-        
     def track_connection(self, file_name):
         client, server = self.args.connection[0], self.args.connection[1]
         (client_ip, client_port) = client.split(":")
